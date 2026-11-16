@@ -20,9 +20,11 @@ if [ "$(uname -s)" = Darwin ]; then
             -e 'do shell script "/usr/bin/ditto " & quoted form of item 1 of argv & " /Applications/Docker.app" with administrator privileges' \
             -e 'end run' "$cache/mount/Docker.app"
     fi
-    open -g -a /Applications/Docker.app
     docker=/Applications/Docker.app/Contents/Resources/bin/docker
-    echo 'Docker가 준비되기를 기다립니다. Docker 창이 뜨면 안내에 따라 주세요.'
+    if ! $docker info >/dev/null 2>&1; then
+        open -g -a /Applications/Docker.app
+        echo 'Docker가 준비되기를 기다립니다.'
+    fi
 else
     root=''
     [ "$(id -u)" = 0 ] || root=sudo
@@ -51,8 +53,10 @@ until [ "$($docker info --format '{{.OSType}}' 2>/dev/null)" = linux ]; do
     waited=$((waited + 3))
     if [ "$waited" -gt 900 ]; then
         echo 'Docker가 시작되지 않았습니다. Docker를 연 뒤 같은 명령을 다시 실행하세요.' >&2
+        $docker info 2>&1 | tail -n 1 >&2 || true
         exit 1
     fi
+    [ $((waited % 30)) -ne 0 ] || echo 'Docker 창에 동의, 로그인, 업데이트 화면이 있으면 진행해 주세요. 계속 기다립니다.'
     sleep 3
 done
 

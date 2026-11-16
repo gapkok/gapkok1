@@ -9,11 +9,12 @@
     $desktop = Join-Path $env:ProgramFiles 'Docker\Docker\Docker Desktop.exe'
     $docker = Join-Path $env:ProgramFiles 'Docker\Docker\resources\bin\docker.exe'
 
-    function Ready {
-        if (-not (Test-Path $docker)) { return $false }
-        $ErrorActionPreference = 'SilentlyContinue'
-        $system = & $docker info --format '{{.OSType}}' 2>$null
-        return ($LASTEXITCODE -eq 0 -and $system -eq 'linux')
+    # Docker 엔진의 종류(linux, windows)를 돌려주고, 응답하지 않으면 Docker가 말한 이유를 돌려준다.
+    function Engine {
+        $ErrorActionPreference = 'Continue'
+        $all = @(& $docker info --format '{{.OSType}}' 2>&1)
+        if ($LASTEXITCODE -eq 0) { return [string]($all | Where-Object { $_ -is [string] } | Select-Object -First 1) }
+        return 'error ' + ($all | Out-String).Trim()
     }
 
     # 설치되지 않은 PC에서는 wsl --status가 입력을 기다리므로 시간을 정해 확인한다.
@@ -56,13 +57,26 @@
         if ($setup.ExitCode -ne 0) { throw 'WSL 또는 Docker 설치를 완료하지 못했습니다. 같은 명령을 다시 실행하세요.' }
     }
 
-    if (-not (Get-Process -Name 'Docker Desktop' -ErrorAction SilentlyContinue)) { Start-Process -FilePath $desktop }
-    Write-Host 'Docker가 준비되기를 기다립니다. Docker 창이 뜨면 안내에 따라 주세요.'
-    $waited = 0
-    while (-not (Ready)) {
-        $waited += 3
-        if ($waited -gt 900) { throw 'Docker가 시작되지 않았습니다. Docker Desktop을 연 뒤 같은 명령을 다시 실행하세요.' }
-        Start-Sleep -Seconds 3
+    $state = Engine
+    if ($state -ne 'linux') {
+        if (-not (Get-Process -Name 'Docker Desktop' -ErrorAction SilentlyContinue)) { Start-Process -FilePath $desktop }
+        Write-Host 'Docker가 준비되기를 기다립니다.'
+        $waited = 0; $denied = 0; $switched = $false
+        while ($true) {
+            $state = Engine
+            if ($state -eq 'linux') { break }
+            if ($state -eq 'windows' -and -not $switched) {
+                Write-Host 'Docker를 Linux 컨테이너 방식으로 바꿉니다.'
+                & (Join-Path $env:ProgramFiles 'Docker\Docker\DockerCli.exe') -SwitchLinuxEngine
+                $switched = $true
+            }
+            if ($state -match 'permission denied|Access is denied') { $denied += 1 } else { $denied = 0 }
+            if ($denied -ge 10) { throw '이 Windows 계정은 Docker를 사용할 권한이 없습니다. Docker를 설치한 계정으로 로그인해 같은 명령을 다시 실행하세요.' }
+            $waited += 3
+            if ($waited -gt 900) { throw ('Docker가 시작되지 않았습니다. Docker Desktop을 연 뒤 같은 명령을 다시 실행하세요. Docker의 응답: ' + $state) }
+            if ($waited % 30 -eq 0) { Write-Host 'Docker 창에 동의, 로그인, 업데이트 화면이 있으면 진행해 주세요. 계속 기다립니다.' }
+            Start-Sleep -Seconds 3
+        }
     }
 
     $ErrorActionPreference = 'Continue'
