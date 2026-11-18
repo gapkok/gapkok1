@@ -3,13 +3,13 @@
 & {
     $ErrorActionPreference = 'Stop'
     $ProgressPreference = 'SilentlyContinue'
-    $version = '2026.11.18.3'
+    $version = '2026.11.18.4'
     $base = 'https://gapkok.com'
     $image = 'gapkok/manager:' + $version
     $name = 'GapKok'
-    $linux = '789c74beedddd84f9cdaf4eb57657676f46f26a029c537054509f1305e819a27'
-    $manager = '7b6cd7d0ccc1cf6010a570011846dd87dca26709b8baf699d23b039da403605b'
-    if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { $linux = 'd8af598a6fa42017f0750448737598628d66d4d0ca4dd645be1384d02a5b956e'; $manager = '643058770b621b6fc1124e8816ab10ebb380a5d8bfc4fc1fa20404ce609183d9' }
+    $linux = 'cd319b776a23b6539eede8245588e81b7ef47e1e9de4932744bb1ba6217eedc1'
+    $manager = '8fe34f29ee62c4bbef77c570997908bad1e3a442780c6e142f04ce50874ac7f9'
+    if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { $linux = '416c5654f0d838744aa44eb4880a5a85dc31eb420e7649eab8c98e7ab1d04587'; $manager = 'b60d344fe766a8b1f0cfee4ee860d0aa42094a3938d121396d5bc4284cc284c6' }
     # WSL 구성 요소. 창 없이 Linux 명령을 실행한다.
     $hold = Join-Path $env:ProgramFiles 'WSL\wslg.exe'
     # WSL과 Linux가 내는 글을 UTF-8로 읽는다.
