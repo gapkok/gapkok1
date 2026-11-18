@@ -1,7 +1,7 @@
 #!/bin/sh
-# 값콕 Hub 설치 (Mac, Linux). Docker를 준비하고 Hub 관리 컨테이너를 시작한다.
+# 값콕 Hub 설치 (Mac, Linux). Docker를 준비해 로그인할 때 켜지게 하고 Hub 관리 컨테이너를 시작한다.
 set -eu
-version='2026.11.16.1'
+version='2026.11.18.1'
 base='https://gapkok.com'
 image="gapkok/manager:$version"
 
@@ -16,13 +16,26 @@ if [ "$(uname -s)" = Darwin ]; then
         hdiutil attach "$cache/Docker.dmg" -mountpoint "$cache/mount" -nobrowse >/dev/null
         codesign --verify --deep --strict "$cache/mount/Docker.app"
         codesign -dv "$cache/mount/Docker.app" 2>&1 | grep -q 'TeamIdentifier=9BNSXJN65R'
+        echo '이 Mac의 비밀번호를 묻는 창이 열리면 입력하세요.'
+        # Docker's installer accepts its agreement and does the admin setup now, so Docker opens without asking again.
         /usr/bin/osascript -e 'on run argv' \
-            -e 'do shell script "/usr/bin/ditto " & quoted form of item 1 of argv & " /Applications/Docker.app" with administrator privileges' \
-            -e 'end run' "$cache/mount/Docker.app"
+            -e 'do shell script quoted form of item 1 of argv & " --accept-license --user=" & quoted form of item 2 of argv with administrator privileges' \
+            -e 'end run' "$cache/mount/Docker.app/Contents/MacOS/install" "$(id -un)"
     fi
+    # Docker does not start at login by default; this keeps the Hub running after a restart.
+    mkdir -p "$HOME/Library/LaunchAgents"
+    cat >"$HOME/Library/LaunchAgents/com.gapkok.hub.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>com.gapkok.hub</string>
+<key>ProgramArguments</key><array><string>/usr/bin/open</string><string>-g</string><string>-j</string><string>-a</string><string>Docker</string></array>
+<key>RunAtLoad</key><true/>
+</dict></plist>
+EOF
     docker=/Applications/Docker.app/Contents/Resources/bin/docker
     if ! $docker info >/dev/null 2>&1; then
-        open -g -a /Applications/Docker.app
+        open -g -j -a /Applications/Docker.app
         echo 'Docker가 준비되기를 기다립니다.'
     fi
 else
@@ -63,8 +76,8 @@ done
 if ! $docker image inspect "$image" >/dev/null 2>&1; then
     echo '값콕 Hub를 받습니다.'
     case "$($docker info --format '{{.Architecture}}')" in
-        aarch64|arm64) sum='e1cdaf3062415ffbe0473adae7999d13dacdc75dd454c4b3940746d065458cf4';;
-        x86_64|amd64) sum='39c72a34160e07981fa27281c906956cf518a1a205dd3c8d9f335576cd94963b';;
+        aarch64|arm64) sum='525485b25854c852f2219a1676c7cf065f6e9a1e413d44b78a73828c34e7791e';;
+        x86_64|amd64) sum='85d4dc3717051ef6101af18a450ddb516d91ed922191f1aaf54bb0bf35f7309b';;
         *) echo '지원하지 않는 컴퓨터입니다.' >&2; exit 1;;
     esac
     file=$(mktemp)
