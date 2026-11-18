@@ -69,7 +69,8 @@
     }
 
     # 로그인할 때 창 없이 값콕 Linux를 켜고, 로그인해 있는 동안 WSL이 끄지 않도록 붙어 있는다.
-    $holding = @('--distribution', $name, '--user', 'root', '--cd', '/', '--exec', '/bin/sleep', 'infinity')
+    # wslg.exe는 --exec를 모르면 사용법 창을 띄우고 끝나므로 --shell-type none과 --로 명령을 넘긴다.
+    $holding = @('--distribution', $name, '--user', 'root', '--cd', '/', '--shell-type', 'none', '--', '/bin/sleep', 'infinity')
     New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 'GapKokHub' -Force `
         -Value ('"' + $hold + '" ' + ($holding -join ' ')) | Out-Null
     $held = Get-CimInstance Win32_Process -Filter "Name='wslg.exe'" |
