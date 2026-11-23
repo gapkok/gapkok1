@@ -3,13 +3,13 @@
 & {
     $ErrorActionPreference = 'Stop'
     $ProgressPreference = 'SilentlyContinue'
-    $version = '2026.11.18.4'
+    $version = '2026.11.23.2'
     $base = 'https://gapkok.com'
     $image = 'gapkok/manager:' + $version
     $name = 'GapKok'
     $linux = 'cd319b776a23b6539eede8245588e81b7ef47e1e9de4932744bb1ba6217eedc1'
-    $manager = '8fe34f29ee62c4bbef77c570997908bad1e3a442780c6e142f04ce50874ac7f9'
-    if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { $linux = '416c5654f0d838744aa44eb4880a5a85dc31eb420e7649eab8c98e7ab1d04587'; $manager = 'b60d344fe766a8b1f0cfee4ee860d0aa42094a3938d121396d5bc4284cc284c6' }
+    $manager = '74f9daabbe2100ec86a15085c68d6092ba573e3b01b600798097b7fcdd3bb792'
+    if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { $linux = '416c5654f0d838744aa44eb4880a5a85dc31eb420e7649eab8c98e7ab1d04587'; $manager = 'b57f76ee3c86c7309d9a7f51850d36e2a3f85d692ba0f5a97f25ef0d9049ec45' }
     # WSL 구성 요소. 창 없이 Linux 명령을 실행한다.
     $hold = Join-Path $env:ProgramFiles 'WSL\wslg.exe'
     # WSL과 Linux가 내는 글을 UTF-8로 읽는다.

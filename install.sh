@@ -1,7 +1,7 @@
 #!/bin/sh
 # 값콕 Hub 설치 (Mac, Linux). Docker를 준비해 로그인할 때 켜지게 하고 Hub 관리 컨테이너를 시작한다.
 set -eu
-version='2026.11.18.4'
+version='2026.11.23.2'
 base='https://gapkok.com'
 image="gapkok/manager:$version"
 
@@ -76,8 +76,8 @@ done
 if ! $docker image inspect "$image" >/dev/null 2>&1; then
     echo '값콕 Hub를 받습니다.'
     case "$($docker info --format '{{.Architecture}}')" in
-        aarch64|arm64) sum='b60d344fe766a8b1f0cfee4ee860d0aa42094a3938d121396d5bc4284cc284c6';;
-        x86_64|amd64) sum='8fe34f29ee62c4bbef77c570997908bad1e3a442780c6e142f04ce50874ac7f9';;
+        aarch64|arm64) sum='b57f76ee3c86c7309d9a7f51850d36e2a3f85d692ba0f5a97f25ef0d9049ec45';;
+        x86_64|amd64) sum='74f9daabbe2100ec86a15085c68d6092ba573e3b01b600798097b7fcdd3bb792';;
         *) echo '지원하지 않는 컴퓨터입니다.' >&2; exit 1;;
     esac
     file=$(mktemp)
