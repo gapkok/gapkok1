@@ -57,8 +57,15 @@
         $ErrorActionPreference = 'Stop'
         Remove-Item -LiteralPath $file -Force
         if (-not $imported) {
+            # WSL은 있어도 그 Linux를 돌리는 Windows 기능이 꺼진 PC가 있다. 기능을 켜고, 다시 시작이 필요하다고 하면 아래에서 이어간다.
+            if (-not $fresh -and $said -match 'HCS_E_SERVICE_NOT_AVAILABLE') {
+                Write-Host 'Windows의 가상 머신 기능을 켭니다. 관리자 권한을 묻는 창에서 예를 누르세요.'
+                $setup = Start-Process -FilePath 'dism.exe' -Verb RunAs -WindowStyle Hidden -Wait -PassThru `
+                    -ArgumentList '/online', '/enable-feature', '/featurename:VirtualMachinePlatform', '/all', '/norestart'
+                $fresh = $setup.ExitCode -eq 3010
+            }
             if ($fresh) {
-                # WSL을 막 설치했으면 다시 시작해야 쓸 수 있다. 로그인하면 같은 설치를 한 번 이어서 실행한다.
+                # WSL을 막 설치했거나 기능을 막 켰으면 다시 시작해야 쓸 수 있다. 로그인하면 같은 설치를 한 번 이어서 실행한다.
                 New-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce' -Name 'GapKokHubInstall' -Force `
                     -Value ('powershell.exe -NoProfile -NoExit -Command "irm ' + $base + '/install.ps1 | iex"') | Out-Null
                 Write-Host '컴퓨터를 다시 시작하면 설치를 이어갑니다.'
